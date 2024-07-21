@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glucose Spikes</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        text-align: center;
+      }
+
+      input[type="text"] {
+        padding: 10px;
+        width: 300px;
+        margin-bottom: 20px;
+        font-size: 16px;
+        border-radius: 20px;
+      }
+
+      .post-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .post {
+        border: 1px solid #ddd;
+        margin: 10px;
+        padding: 10px;
+        width: 300px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+      }
+
+      .post img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .post p {
+        margin-top: 10px;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Glucose Spikes</h1>
+    <input type="text" id="search" placeholder="Search..." />
+
+    <div class="post-container" id="post-container"></div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const searchInput = document.getElementById("search");
+        const postContainer = document.getElementById("post-container");
+
+        const fetchPosts = async () => {
+          try {
+            const response = await fetch(
+              "https://glucosespikes.duckdns.org/api/posts"
+            );
+            if (!response.ok) {
+              throw new Error("Server response was not ok");
+            }
+            return await response.json();
+          } catch (error) {
+            console.error("Error fetching posts:", error);
+            return [];
+          }
+        };
+
+        const posts = await fetchPosts();
+
+        const sanitizeText = text => {
+          return text.replace(/\u2800/g, "");
+        };
+
+        const displayPosts = filteredPosts => {
+          postContainer.innerHTML = "";
+          filteredPosts.forEach(post => {
+            const sanitizedDescription = sanitizeText(post.description);
+
+            const postElement = document.createElement("div");
+            postElement.className = "post";
+            postElement.innerHTML = `
+              <img loading="lazy" src="${post.imgSrc}" alt="Instagram Post">
+              <p>${sanitizedDescription}</p>
+            `;
+            postContainer.appendChild(postElement);
+          });
+        };
+
+        displayPosts(posts);
+
+        // Filter posts based on search term
+        searchInput.addEventListener("input", event => {
+          const searchTerm = event.target.value.toLowerCase();
+          const filteredPosts = posts.filter(post => {
+            const descriptionMatches = post.description
+              .toLowerCase()
+              .includes(searchTerm);
+            const wordsFromImageMatches = post.wordsFromImage.some(word =>
+              word.toLowerCase().includes(searchTerm)
+            );
+            return descriptionMatches || wordsFromImageMatches;
+          });
+          displayPosts(filteredPosts);
+        });
+      });
+    </script>
+  </body>
+</html>
