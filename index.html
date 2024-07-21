@@ -32,6 +32,7 @@
         width: 300px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
+        text-align: left;
       }
 
       .post img {
@@ -41,7 +42,13 @@
 
       .post p {
         margin-top: 10px;
-        text-align: left;
+        display: none;
+      }
+
+      .show-description {
+        color: blue;
+        cursor: pointer;
+        text-decoration: underline;
       }
     </style>
   </head>
@@ -55,12 +62,11 @@
       document.addEventListener("DOMContentLoaded", async () => {
         const searchInput = document.getElementById("search");
         const postContainer = document.getElementById("post-container");
+        const descriptionVisibility = {};
 
         const fetchPosts = async () => {
           try {
-            const response = await fetch(
-              "http://localhost:5000/api/posts"
-            );
+            const response = await fetch("http://localhost:5000/api/posts");
             if (!response.ok) {
               throw new Error("Server response was not ok");
             }
@@ -73,9 +79,7 @@
 
         const posts = await fetchPosts();
 
-        const sanitizeText = text => {
-          return text.replace(/\u2800/g, "");
-        };
+        const sanitizeText = text => text.replace(/\u2800/g, "");
 
         const displayPosts = filteredPosts => {
           postContainer.innerHTML = "";
@@ -86,8 +90,30 @@
             postElement.className = "post";
             postElement.innerHTML = `
               <img loading="lazy" src="${post.imgSrc}" alt="Instagram Post">
-              <p>${sanitizedDescription}</p>
+              <p style="display:none">${sanitizedDescription}</p>
+              <span class="show-description">Show description</span>
             `;
+
+            const showDescription = postElement.querySelector('.show-description');
+            const description = postElement.querySelector('p');
+
+            if (descriptionVisibility[post.id]) {
+              description.style.display = 'block';
+              showDescription.textContent = 'Hide description';
+            }
+
+            showDescription.addEventListener('click', () => {
+              if (description.style.display === 'none') {
+                description.style.display = 'block';
+                showDescription.textContent = 'Hide description';
+                descriptionVisibility[post.id] = true;
+              } else {
+                description.style.display = 'none';
+                showDescription.textContent = 'Show description';
+                descriptionVisibility[post.id] = false;
+              }
+            });
+
             postContainer.appendChild(postElement);
           });
         };
@@ -98,13 +124,9 @@
         searchInput.addEventListener("input", event => {
           const searchTerm = event.target.value.toLowerCase();
           const filteredPosts = posts.filter(post => {
-            const descriptionMatches = post.description
-              .toLowerCase()
-              .includes(searchTerm);
-            const wordsFromImageMatches = post.wordsFromImage.some(word =>
-              word.toLowerCase().includes(searchTerm)
-            );
-            return descriptionMatches || wordsFromImageMatches;
+            const descriptionMatches = post.description.toLowerCase().includes(searchTerm);
+            const imageTextMatches = post.imgText.toLowerCase().includes(searchTerm);
+            return descriptionMatches || imageTextMatches;
           });
           displayPosts(filteredPosts);
         });
