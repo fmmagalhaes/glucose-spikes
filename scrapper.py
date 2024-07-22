@@ -36,6 +36,42 @@ def download_image(url, filepath):
         return None
 
 
+def trim_white_space_vertical(image_path, tolerance=10, margin=20):
+    img = Image.open(image_path)
+
+    # Convert image to grayscale
+    img_gray = img.convert("L")
+
+    width, height = img_gray.size
+    pixels = img_gray.load()
+
+    # Find the first non-white row from the top
+    top = 0
+    for y in range(height):
+        is_white_row = all(pixels[x, y] > 255 - tolerance for x in range(width))
+        if not is_white_row:
+            top = y
+            break
+
+    # Find the first non-white row from the bottom
+    bottom = height
+    for y in range(height - 1, top - 1, -1):
+        is_white_row = all(pixels[x, y] > 255 - tolerance for x in range(width))
+        if not is_white_row:
+            bottom = y + 1
+            break
+
+    top = max(top - margin, 0)
+    bottom = min(bottom + margin, height)
+
+    if top < bottom:
+        img_cropped = img.crop((0, top, width, bottom))
+        img_cropped.save(image_path)
+        print(f"Image cropped: top={top}, bottom={bottom}, with margin={margin}")
+    else:
+        print("No cropping needed or invalid bounds.")
+
+
 def extract_text_from_image(image_path):
     try:
         image = Image.open(image_path)
@@ -91,11 +127,14 @@ def scrape_instagram_posts(username, existing_post_ids):
                 extracted_text = extract_text_from_image(downloaded_path)
 
                 # Check if the extracted text contains any of the keywords
-                if 'glucose' in extracted_text.lower() and \
-                    'spike' in extracted_text.lower() and \
-                        'baseline' in extracted_text.lower():
+                extracted_text_lower = extracted_text.lower()
+                if 'glucose' in extracted_text_lower and \
+                    'spike' in extracted_text_lower and \
+                        'baseline' in extracted_text_lower:
 
                     print("Found spike chart!")
+
+                    trim_white_space_vertical(downloaded_path)
 
                     post_data = {
                         'id': post.mediaid,
