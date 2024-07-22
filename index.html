@@ -50,11 +50,29 @@
         cursor: pointer;
         text-decoration: underline;
       }
+
+      .github-logo {
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .github-logo img {
+        width: 32px;
+        height: 32px;
+      }
     </style>
   </head>
   <body>
     <h1>Glucose Spikes</h1>
-    <p>Data sourced from <a href="https://www.instagram.com/glucosegoddess/" target="_blank">Glucose Goddess</a> Instagram account</p>
+    <p>Data sourced from <a href="https://www.instagram.com/glucosegoddess/" target="_blank">Glucose Goddess</a> Instagram</p>
+    
+    <div class="github-logo">
+      <a href="https://github.com/fmmagalhaes/glucose-spikes" target="_blank">
+        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/>
+      </a>
+    </div>
+
     <input type="text" id="search" placeholder="Search..." />
 
     <div class="post-container" id="post-container"></div>
