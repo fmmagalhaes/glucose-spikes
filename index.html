@@ -4,62 +4,150 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Glucose Spikes</title>
+    <!-- Include Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
         padding: 20px;
         text-align: center;
+        background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+        color: #333;
+      }
+
+      h1 {
+        margin-bottom: 16px;
+      }
+
+      p a {
+        color: #c23edd;
+        text-decoration: none;
+      }
+
+      p a:hover {
+        text-decoration: underline;
       }
 
       input[type="text"] {
-        padding: 10px;
+        padding: 12px;
         width: 300px;
         margin-bottom: 20px;
         font-size: 16px;
-        border-radius: 20px;
+        border-radius: 25px;
+        border: 2px solid #ddd;
+        transition: border-color 0.3s;
+      }
+
+      input[type="text"]:focus {
+        border-color: #c23edd;
+        outline: none;
       }
 
       .post-container {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
+        gap: 20px;
       }
 
       .post {
         border: 1px solid #ddd;
         margin: 10px;
-        padding: 10px;
+        padding: 20px;
         width: 300px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
         text-align: left;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        background-color: #fff;
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .post:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
       }
 
       .post img {
         max-width: 100%;
         height: auto;
+        border-radius: 10px;
+        cursor: pointer;
       }
 
       .post p {
-        margin-top: 10px;
+        margin-top: 8px;
+        font-size: 12px;
+        color: #666;
         display: none;
       }
 
       .show-description {
-        color: blue;
+        color: #929193;
         cursor: pointer;
-        text-decoration: underline;
+        text-decoration: none;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        margin-top: 12px;
+        padding: 0;
+        transition: color 0.3s;
+      }
+
+      .show-description i {
+        margin-left: 8px;
+        color: inherit;
+        transition: transform 0.3s;
+      }
+
+      .show-description:before {
+        content: '';
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background: url('expand-icon.png') no-repeat center center;
+        background-size: contain;
+        margin-right: -15px;
+        transition: background 0.3s;
+      }
+
+      .post p.showing-description {
+        display: block;
+      }
+
+      .show-description.hide-description:before {
+        background: url('collapse-icon.png') no-repeat center center;
+        background-size: contain;
       }
 
       .github-logo {
         position: absolute;
-        right: 0;
-        top: 0;
+        right: 16px;
+        top: 16px;
       }
 
       .github-logo img {
         width: 32px;
         height: 32px;
+      }
+
+      .external-link {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #c23edd;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+      }
+
+      .external-link i {
+        margin-left: 5px;
+        vertical-align: middle;
+      }
+
+      .external-link:hover {
+        text-decoration: underline;
       }
     </style>
   </head>
@@ -69,7 +157,7 @@
     
     <div class="github-logo">
       <a href="https://github.com/fmmagalhaes/glucose-spikes" target="_blank">
-        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"/>
+        <img src="assets/github-mark.png" alt="GitHub Logo"/>
       </a>
     </div>
 
@@ -108,28 +196,36 @@
             const postElement = document.createElement("div");
             postElement.className = "post";
             postElement.innerHTML = `
-              <img loading="lazy" src="${post.imgSrc}" alt="Instagram Post">
-              <p style="display:none">${sanitizedDescription}</p>
-              <span class="show-description">Show description</span>
+              <img loading="lazy" src="${post.imgSrc}" alt="Instagram Post" class="expand-description">
+              <span class="show-description">Show description <i class="fa-solid fa-chevron-down"></i></span>
+              <p>${sanitizedDescription}<br/><a href="${post.postUrl}" target="_blank" class="external-link">View on Instagram <i class="fa-solid fa-arrow-up-right-from-square"></i></a></p>
             `;
 
             const showDescription = postElement.querySelector('.show-description');
             const description = postElement.querySelector('p');
+            const image = postElement.querySelector('.expand-description');
 
             if (descriptionVisibility[post.id]) {
-              description.style.display = 'block';
-              showDescription.textContent = 'Hide description';
+              description.classList.add('showing-description');
+              showDescription.classList.add('hide-description');
+              showDescription.innerHTML = 'Hide description <i class="fa-solid fa-chevron-up"></i>';
             }
 
+            image.addEventListener('click', () => {
+              showDescription.click();
+            });
+
             showDescription.addEventListener('click', () => {
-              if (description.style.display === 'none') {
-                description.style.display = 'block';
-                showDescription.textContent = 'Hide description';
-                descriptionVisibility[post.id] = true;
-              } else {
-                description.style.display = 'none';
-                showDescription.textContent = 'Show description';
+              if (description.classList.contains('showing-description')) {
+                description.classList.remove('showing-description');
+                showDescription.classList.remove('hide-description');
+                showDescription.innerHTML = 'Show description <i class="fa-solid fa-chevron-down"></i>';
                 descriptionVisibility[post.id] = false;
+              } else {
+                description.classList.add('showing-description');
+                showDescription.classList.add('hide-description');
+                showDescription.innerHTML = 'Hide description <i class="fa-solid fa-chevron-up"></i>';
+                descriptionVisibility[post.id] = true;
               }
             });
 
