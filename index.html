@@ -4,24 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Glucose Spikes</title>
+    <!-- Include Google Fonts for food-related theme -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500&display=swap">
     <!-- Include Font Awesome CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
       body {
-        font-family: 'Helvetica Neue', Arial, sans-serif;
-        padding: 20px;
+        font-family: 'Quicksand', sans-serif;
+        margin: 0;
         text-align: center;
-        background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+        background: linear-gradient(135deg, #fff5f2, #f8e4e0);
         color: #333;
+        min-height: 100vh;
       }
 
       h1 {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+        font-size: 2.5em;
+        color: #333;
       }
 
       p a {
-        color: #c23edd;
+        color: #e94e77;
         text-decoration: none;
+        font-weight: 500;
       }
 
       p a:hover {
@@ -30,16 +36,18 @@
 
       input[type="text"] {
         padding: 12px;
-        width: 300px;
+        width: 100%;
+        max-width: 400px;
         margin-bottom: 20px;
         font-size: 16px;
-        border-radius: 25px;
-        border: 2px solid #ddd;
-        transition: border-color 0.3s;
+        border-radius: 30px;
+        border: 2px solid #e94e77;
+        transition: border-color 0.3s, box-shadow 0.3s;
       }
 
       input[type="text"]:focus {
-        border-color: #c23edd;
+        border-color: #e94e77;
+        box-shadow: 0 0 8px rgba(233, 78, 119, 0.2);
         outline: none;
       }
 
@@ -48,25 +56,21 @@
         flex-wrap: wrap;
         justify-content: center;
         gap: 20px;
+        padding: 20px 0;
       }
 
       .post {
         border: 1px solid #ddd;
-        margin: 10px;
-        padding: 20px;
+        padding: 16px;
         width: 300px;
         text-align: left;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 15px;
+        border-radius: 8px;
         background-color: #fff;
-        transition: transform 0.3s, box-shadow 0.3s;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .post:hover {
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        align-items: center;
+        justify-content: space-between;
       }
 
       .post img {
@@ -77,65 +81,51 @@
       }
 
       .post p {
-        margin-top: 8px;
+        margin: 10px 8px 0px 8px;
         font-size: 12px;
         color: #666;
         display: none;
       }
 
       .show-description {
-        color: #929193;
+        color: #e94e77;
         cursor: pointer;
         text-decoration: none;
         font-size: 14px;
         display: flex;
         align-items: center;
-        margin-top: 12px;
+        margin-top: 10px;
+        margin-left: 16px;
         padding: 0;
-        transition: color 0.3s;
+        text-align: left;
+        width: 100%;
+        display: none;
       }
 
       .show-description i {
         margin-left: 8px;
-        color: inherit;
-        transition: transform 0.3s;
-      }
-
-      .show-description:before {
-        content: '';
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        background: url('expand-icon.png') no-repeat center center;
-        background-size: contain;
-        margin-right: -15px;
-        transition: background 0.3s;
       }
 
       .post p.showing-description {
         display: block;
       }
 
-      .show-description.hide-description:before {
-        background: url('collapse-icon.png') no-repeat center center;
-        background-size: contain;
-      }
-
       .github-logo {
-        position: absolute;
-        right: 16px;
-        top: 16px;
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        z-index: 1000;
       }
 
       .github-logo img {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
       }
 
       .external-link {
         margin-top: 10px;
         font-size: 12px;
-        color: #c23edd;
+        color: #e94e77;
         text-decoration: none;
         display: flex;
         align-items: center;
@@ -148,6 +138,37 @@
 
       .external-link:hover {
         text-decoration: underline;
+      }
+
+      .load-more {
+        margin: 20px 0;
+        padding: 12px 24px;
+        border: 2px solid #e94e77;
+        background: white;
+        color: #e94e77;
+        font-size: 16px;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: background 0.3s, color 0.3s, transform 0.3s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .load-more:hover {
+        background: #e94e77;
+        color: white;
+        transform: scale(1.05);
+      }
+
+      .load-more:focus {
+        outline: none;
+        box-shadow: 0 0 8px rgba(233, 78, 119, 0.2);
+      }
+
+      @media (max-width: 600px) {
+        .post-container {
+          flex-direction: column;
+          align-items: center;
+        }
       }
     </style>
   </head>
@@ -164,11 +185,13 @@
     <input type="text" id="search" placeholder="Search..." />
 
     <div class="post-container" id="post-container"></div>
+    <button id="load-more" class="load-more">Load More</button>
 
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
         const searchInput = document.getElementById("search");
         const postContainer = document.getElementById("post-container");
+        const loadMoreButton = document.getElementById("load-more");
         const descriptionVisibility = {};
 
         const fetchPosts = async () => {
@@ -185,12 +208,15 @@
         };
 
         const posts = await fetchPosts();
+        let visiblePosts = [];
+        let currentIndex = 0;
+        const postsPerPage = 12;
 
         const sanitizeText = text => text.replace(/\u2800/g, "");
 
-        const displayPosts = filteredPosts => {
+        const displayPosts = (postsToDisplay) => {
           postContainer.innerHTML = "";
-          filteredPosts.forEach(post => {
+          postsToDisplay.forEach(post => {
             const sanitizedDescription = sanitizeText(post.description);
 
             const postElement = document.createElement("div");
@@ -233,9 +259,20 @@
           });
         };
 
-        displayPosts(posts);
+        const loadMorePosts = () => {
+          const newPosts = posts.slice(currentIndex, currentIndex + postsPerPage);
+          visiblePosts = visiblePosts.concat(newPosts);
+          displayPosts(visiblePosts);
+          currentIndex += postsPerPage;
 
-        // Filter posts based on search term
+          // Hide Load More button if all posts are loaded
+          if (currentIndex >= posts.length) {
+            loadMoreButton.style.display = "none";
+          }
+        };
+
+        loadMorePosts();
+
         searchInput.addEventListener("input", event => {
           const searchTerm = event.target.value.toLowerCase();
           const filteredPosts = posts.filter(post => {
@@ -243,7 +280,19 @@
             const imageTextMatches = post.imgText.toLowerCase().includes(searchTerm);
             return descriptionMatches || imageTextMatches;
           });
-          displayPosts(filteredPosts);
+
+          // Show all results and hide Load More button during search
+          visiblePosts = filteredPosts;
+          displayPosts(visiblePosts);
+          loadMoreButton.style.display = "none";
+        });
+
+        loadMoreButton.addEventListener("click", () => {
+          loadMorePosts();
+          loadMoreButton.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            loadMoreButton.style.transform = 'scale(1)';
+          }, 150);
         });
       });
     </script>
