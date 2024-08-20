@@ -1,6 +1,7 @@
 import time
 import instaloader
 import os
+import sys
 import hashlib
 import requests
 from PIL import Image
@@ -9,8 +10,9 @@ import json
 from datetime import datetime, timedelta
 
 L = instaloader.Instaloader()
+BASE_DIR = sys.path[0]
 
-images_dir = 'images'
+images_dir = os.path.join(BASE_DIR, 'images')
 if not os.path.exists(images_dir):
     os.makedirs(images_dir)
 
@@ -83,14 +85,16 @@ def extract_text_from_image(image_path):
 
 
 def load_existing_posts(filename='posts.json'):
-    if os.path.exists(filename):
-        with open(filename, 'r') as json_file:
+    filepath = os.path.join(BASE_DIR, filename)
+    if os.path.exists(filepath):
+        with open(filepath, 'r') as json_file:
             return json.load(json_file)
     return []
 
 
 def save_posts_to_json(posts, filename='posts.json'):
-    with open(filename, 'w') as json_file:
+    filepath = os.path.join(BASE_DIR, filename)
+    with open(filepath, 'w') as json_file:
         json.dump(posts, json_file, indent=2)
 
 
@@ -140,7 +144,7 @@ def scrape_instagram_posts(username, existing_post_ids):
                         'id': post.mediaid,
                         'postUrl': post_url,
                         'imgOriginalSrc': image_url,
-                        'imgSrc': downloaded_path,
+                        'imgSrc': os.path.relpath(downloaded_path, BASE_DIR),
                         'imgText': extracted_text,
                         'description': post.caption,
                         'date': post.date_utc.strftime('%Y-%m-%d %H:%M:%S'),
