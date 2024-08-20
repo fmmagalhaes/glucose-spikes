@@ -167,7 +167,7 @@ def main():
     new_posts = scrape_instagram_posts(username, existing_post_ids)
 
     if new_posts:
-        existing_posts.extend(new_posts)
+        existing_posts = new_posts + existing_posts
         save_posts_to_json(existing_posts)
         print("New posts have been saved to posts.json")
     else:
