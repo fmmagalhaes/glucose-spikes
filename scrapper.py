@@ -11,6 +11,10 @@ from datetime import datetime, timedelta
 
 L = instaloader.Instaloader()
 BASE_DIR = sys.path[0]
+USERNAME = 'glucosegoddess'
+# Instagram gives us 12 posts in a first call. That's a 3x4 grid. In case this changes to 3x3, we're only iterating through the first 9, to avoid extra calls.
+MAX_POSTS = 9
+SPIKE_CHART_KEYWORDS = {'glucose', 'spike', 'baseline'}
 
 images_dir = os.path.join(BASE_DIR, 'images')
 if not os.path.exists(images_dir):
@@ -77,7 +81,7 @@ def trim_white_space_vertical(image_path, tolerance=10, margin=20):
 def extract_text_from_image(image_path):
     try:
         image = Image.open(image_path)
-        text = pytesseract.image_to_string(image, lang='eng')
+        text = pytesseract.image_to_string(image, lang='eng')  # OCR
         return text
     except Exception as e:
         print(f"Error extracting text from image: {e}")
@@ -98,6 +102,45 @@ def save_posts_to_json(posts, filename='posts.json'):
         json.dump(posts, json_file, indent=2)
 
 
+def contains_spike_chart_keywords(text):
+    return all(keyword in text.lower() for keyword in SPIKE_CHART_KEYWORDS)
+
+
+def process_post(post, existing_post_ids):
+    post_url = f"https://www.instagram.com/p/{post.shortcode}/"
+    print(f"Processing post: {post_url}")
+
+    if post.mediaid in existing_post_ids:
+        print(f"Post {post.mediaid} already processed. Skipping.")
+        return
+
+    image_url = post.url
+    short_filename = get_short_filename(image_url)
+    image_local_path = download_image(image_url, os.path.join(images_dir, short_filename))
+
+    if image_local_path:
+        extracted_text = extract_text_from_image(image_local_path)
+
+        if contains_spike_chart_keywords(extracted_text):
+            print("Found spike chart!")
+
+            trim_white_space_vertical(image_local_path)
+
+            post_data = {
+                'id': post.mediaid,
+                'postUrl': post_url,
+                'imgOriginalSrc': image_url,
+                'imgSrc': os.path.relpath(image_local_path, BASE_DIR),
+                'imgText': extracted_text,
+                'description': post.caption,
+                'date': post.date_utc.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            return post_data
+
+        else:
+            os.remove(image_local_path)
+
+
 def scrape_instagram_posts(username, existing_post_ids):
     profile = instaloader.Profile.from_username(L.context, username)
     posts = []
@@ -108,51 +151,13 @@ def scrape_instagram_posts(username, existing_post_ids):
             i = i+1
             time.sleep(5)
 
-            if i >= 9:
+            if i >= MAX_POSTS:
                 print("Finished getting latest posts")
                 break
 
-            post_url = f"https://www.instagram.com/p/{post.shortcode}/"
-            image_url = post.url
-
-            print(f"Processing post: {post_url}")
-
-            if post.mediaid in existing_post_ids:
-                print(f"Post {post.mediaid} already processed. Skipping.")
-                continue
-
-            short_filename = get_short_filename(image_url)
-            image_filename = os.path.join(images_dir, short_filename)
-
-            downloaded_path = download_image(image_url, image_filename)
-
-            if downloaded_path:
-                # Perform OCR on the image
-                extracted_text = extract_text_from_image(downloaded_path)
-
-                # Check if the extracted text contains any of the keywords
-                extracted_text_lower = extracted_text.lower()
-                if 'glucose' in extracted_text_lower and \
-                    'spike' in extracted_text_lower and \
-                        'baseline' in extracted_text_lower:
-
-                    print("Found spike chart!")
-
-                    trim_white_space_vertical(downloaded_path)
-
-                    post_data = {
-                        'id': post.mediaid,
-                        'postUrl': post_url,
-                        'imgOriginalSrc': image_url,
-                        'imgSrc': os.path.relpath(downloaded_path, BASE_DIR),
-                        'imgText': extracted_text,
-                        'description': post.caption,
-                        'date': post.date_utc.strftime('%Y-%m-%d %H:%M:%S'),
-                    }
-                    posts.append(post_data)
-
-                else:
-                    os.remove(downloaded_path)
+            post_data = process_post(post, existing_post_ids)
+            if post_data:
+                posts.append(post_data)
     except Exception as e:
         print("Failed getting posts", e)
 
@@ -160,11 +165,10 @@ def scrape_instagram_posts(username, existing_post_ids):
 
 
 def main():
-    username = 'glucosegoddess'
     existing_posts = load_existing_posts()
     existing_post_ids = {post['id'] for post in existing_posts}
 
-    new_posts = scrape_instagram_posts(username, existing_post_ids)
+    new_posts = scrape_instagram_posts(USERNAME, existing_post_ids)
 
     if new_posts:
         existing_posts = new_posts + existing_posts
