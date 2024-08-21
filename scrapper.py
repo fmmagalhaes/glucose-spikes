@@ -4,7 +4,7 @@ import os
 import sys
 import hashlib
 import requests
-from PIL import Image
+from PIL import Image, ImageEnhance
 import pytesseract
 import json
 from datetime import datetime, timedelta
@@ -81,6 +81,11 @@ def trim_white_space_vertical(image_path, tolerance=10, margin=20):
 def extract_text_from_image(image_path):
     try:
         image = Image.open(image_path)
+
+        # Enhancing contrast helps reading text
+        enhancer = ImageEnhance.Contrast(image)
+        image = enhancer.enhance(2.0)
+
         text = pytesseract.image_to_string(image, lang='eng')  # OCR
         return text
     except Exception as e:
