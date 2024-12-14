@@ -86,25 +86,6 @@
         display: none;
       }
 
-      .show-description {
-        color: #e94e77;
-        cursor: pointer;
-        text-decoration: none;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        margin-top: 10px;
-        margin-left: 16px;
-        padding: 0;
-        text-align: left;
-        width: 100%;
-        display: none;
-      }
-
-      .show-description i {
-        margin-left: 8px;
-      }
-
       .post p.showing-description {
         display: block;
       }
@@ -191,7 +172,10 @@
         const searchInput = document.getElementById("search");
         const postContainer = document.getElementById("post-container");
         const loadMoreButton = document.getElementById("load-more");
-        const descriptionVisibility = {};
+        const descriptionVisibility = {}; // if we don't keep the visibility state, it will be reset when filtering
+        const postsPerPage = 12;
+        let visiblePosts = [];
+        let currentIndex = 0;
 
         const fetchPosts = async () => {
           try {
@@ -206,11 +190,6 @@
           }
         };
 
-        const posts = await fetchPosts();
-        let visiblePosts = [];
-        let currentIndex = 0;
-        const postsPerPage = 12;
-
         const sanitizeText = text => text.replace(/\u2800/g, "");
 
         const displayPosts = (postsToDisplay) => {
@@ -221,35 +200,23 @@
             const postElement = document.createElement("div");
             postElement.className = "post";
             postElement.innerHTML = `
-              <img loading="lazy" src="${post.imgSrc}" alt="Instagram Post" class="expand-description">
-              <span class="show-description">Show description <i class="fa-solid fa-chevron-down"></i></span>
+              <img loading="lazy" src="${post.imgSrc}" alt="Instagram Post">
               <p>${sanitizedDescription}<br/><a href="${post.postUrl}" target="_blank" class="external-link">View on Instagram <i class="fa-solid fa-arrow-up-right-from-square"></i></a></p>
             `;
 
-            const showDescription = postElement.querySelector('.show-description');
             const description = postElement.querySelector('p');
-            const image = postElement.querySelector('.expand-description');
+            const image = postElement.querySelector('img');
 
             if (descriptionVisibility[post.id]) {
               description.classList.add('showing-description');
-              showDescription.classList.add('hide-description');
-              showDescription.innerHTML = 'Hide description <i class="fa-solid fa-chevron-up"></i>';
             }
 
             image.addEventListener('click', () => {
-              showDescription.click();
-            });
-
-            showDescription.addEventListener('click', () => {
               if (description.classList.contains('showing-description')) {
                 description.classList.remove('showing-description');
-                showDescription.classList.remove('hide-description');
-                showDescription.innerHTML = 'Show description <i class="fa-solid fa-chevron-down"></i>';
                 descriptionVisibility[post.id] = false;
               } else {
                 description.classList.add('showing-description');
-                showDescription.classList.add('hide-description');
-                showDescription.innerHTML = 'Hide description <i class="fa-solid fa-chevron-up"></i>';
                 descriptionVisibility[post.id] = true;
               }
             });
@@ -270,9 +237,7 @@
           }
         };
 
-        loadMorePosts();
-
-        searchInput.addEventListener("input", event => {
+        const handleSearchInput = (event) => {
           const searchTerm = event.target.value.toLowerCase();
           const filteredPosts = posts.filter(post => {
             const descriptionMatches = post.description.toLowerCase().includes(searchTerm);
@@ -284,15 +249,20 @@
           visiblePosts = filteredPosts;
           displayPosts(visiblePosts);
           loadMoreButton.style.display = "none";
-        });
+        };
 
-        loadMoreButton.addEventListener("click", () => {
-          loadMorePosts();
-          loadMoreButton.style.transform = 'scale(0.95)';
-          setTimeout(() => {
-            loadMoreButton.style.transform = 'scale(1)';
-          }, 150);
-        });
+        const setupEventListeners = () => {
+          searchInput.addEventListener("input", handleSearchInput);
+          loadMoreButton.addEventListener("click", loadMorePosts);
+        };
+
+        const init = async () => {
+          posts = await fetchPosts();
+          loadMorePosts(); // Display initial posts
+          setupEventListeners();
+        };
+
+        init();
       });
     </script>
   </body>

@@ -1,5 +1,7 @@
 images
 posts.json
+.DS_Store
+test.jpg
 
 # From https://github.com/github/gitignore/blob/main/Python.gitignore
 
