@@ -19,9 +19,7 @@ if not os.path.exists(images_dir):
 
 
 def get_short_filename(url):
-    url_hash = hashlib.md5(url.encode('utf-8')).hexdigest()
-    file_extension = os.path.splitext(url.split('?')[0])[1]
-    return url_hash + file_extension
+    return hashlib.md5(url.encode('utf-8')).hexdigest()
 
 
 def load_existing_posts(filename='posts.json'):
@@ -49,7 +47,7 @@ def process_post(post, existing_post_ids):
     image_url = post.url
     print(f"Image url: {image_url}")
 
-    short_filename = get_short_filename(post.url)
+    short_filename = get_short_filename(post_url)
     image_local_path = download_image(image_url, os.path.join(images_dir, short_filename))
 
     if image_local_path:
