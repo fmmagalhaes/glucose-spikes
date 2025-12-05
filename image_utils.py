@@ -1,3 +1,4 @@
+import mimetypes
 import pytesseract
 import requests
 from PIL import Image, ImageEnhance
@@ -87,10 +88,18 @@ def download_image(url, filepath):
     }
     response = requests.get(url, headers=headers, stream=True)
     if response.status_code == 200:
-        with open(filepath, 'wb') as file:
+        content_type = response.headers.get('Content-Type')
+        extension = mimetypes.guess_extension(content_type) if content_type else None
+
+        if extension:
+            filepath_with_extension = f"{filepath}{extension}"
+        else:
+            filepath_with_extension = filepath
+
+        with open(filepath_with_extension, 'wb') as file:
             for chunk in response.iter_content(1024):
                 file.write(chunk)
-        return filepath
+        return filepath_with_extension
     else:
         print(f"Failed to download image from {url}")
         return None
