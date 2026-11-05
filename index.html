@@ -183,10 +183,7 @@
 
         const fetchPosts = async () => {
           try {
-            const API_BASE = window.location.protocol === 'file:' 
-              ? 'http://localhost:5000'
-              : '';
-            const response = await fetch(`${API_BASE}/api/posts`);
+            const response = await fetch("./posts.json");
             if (!response.ok) {
               throw new Error("Server response was not ok");
             }
